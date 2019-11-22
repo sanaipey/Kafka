@@ -17,6 +17,7 @@ func main() {
 	}
 	// Subscribes to the provided list of topics
 	// nil = no rebalance event call back
+	// regexpression anything that includes topic
 	err = c.SubscribeTopics([]string{"myTopic", "^aRegex.*[Tt]opic"}, nil)
 
 	for {
