@@ -3,12 +3,14 @@ package main
 import (
 	"fmt"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"time"
 )
 
 func main() {
 	//This initialization makes this an actual kakfa producer app
 	//Creates a kakfa producer with it's configuration settings passed in( a broker listening on 9092)
-	p, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": "localhost:9092"})
+	p, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": "broker:9092"}) //The prod uses this add for initial connection
+	//kafka then redirects prod to the specidied value in kafka_advertised_listeners variable, which prod/con can use.
 	if err != nil {
 		panic(err)
 	}
@@ -54,13 +56,20 @@ func main() {
 	//if scanner.Err() != nil {
 	//	fmt.Printf("Failed to read user input: %v\n", err)
 	//}
-	for _, word := range []string{"This", "is", "a", "slice", "containing", "messages", "produced", "to", "kafka topic"} {
-		p.Produce(&kafka.Message{
+	//for _, word := range []string{"This", "is", "a", "slice", "containing", "messages", "produced", "to", "kafka topic"} {
+	for {
+		//5-second interval between messages
+		time.Sleep(5 * time.Second)
+		err = p.Produce(&kafka.Message{
 			TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
-			Value:          []byte(word),
+			Value:          []byte("word"),
 		}, nil)
+		if err == nil {
+			fmt.Println("OK")
+		} else {
+			fmt.Println(err)
+		}
 	}
-
 	//wait for message deliveries before shutting down
 	p.Flush(15 * 1000)
 }

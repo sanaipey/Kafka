@@ -2,14 +2,16 @@ package main
 
 import (
 	"fmt"
-	"gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
 func main() {
 	c, err := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers": "localhost:9092",
+		"bootstrap.servers": "broker:9092", //Since we defined the variable as PLAINTEXT://localhost:9092, in docker-compose
+		// both producer and consumer received it on the initial connection and used it for further communication with the broker through the forwarded 9092 port.
 		"group.id":          "myGroup",
-		"auto.offset.reset": "earliest", //action to take when there's no initial offset(like a bookmark)
+		"auto.offset.reset": "earliest", //action to take when there's no initial offset(like a bookmark) or if theres a crash
+		//earliest= will move to oldest message availble, latest(default)=most recent
 		// It's how consumers read messages independently,resets to smallest offset
 	})
 	if err != nil {
@@ -22,7 +24,9 @@ func main() {
 
 	for {
 		//ReadMessage polls the consumer for a message, timeout` may be set to -1 for indefinite wait.
+		//poll method returns fetched records based on current partition offset.
 		msg, err := c.ReadMessage(-1)
+		fmt.Printf("Message on %s: %s\n", msg.TopicPartition, string(msg.Value))
 		if err == nil {
 			//msg.TopicPartition provides partition-specific information (such as topic, partition and offset)
 			fmt.Printf("Message on %s: %s\n", msg.TopicPartition, string(msg.Value))
